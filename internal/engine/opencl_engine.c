@@ -12,6 +12,11 @@ int init_gpu(opencl_engine *engine) {
     if (err != CL_SUCCESS) return -1;
     return 0;
 }
-int process_pixels() {
+int process_pixels(opencl_engine *engine, unsigned char *pixels, int size) {
+    int err;
+    cl_mem mem = clCreateBuffer(engine->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR , size, pixels, &err);
+    if (err != CL_SUCCESS) return -1;
+    err = clEnqueueReadBuffer(engine->queue, mem, CL_TRUE, 0, size, pixels, 0, 0, 0);
+    if (err != CL_SUCCESS) return -1;
     return 0;
 }
