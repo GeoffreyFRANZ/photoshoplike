@@ -2,13 +2,14 @@ package main
 
 /*
 #cgo LDFLAGS: -lOpenCL
+#include <stdlib.h>
 */
 import "C"
 import (
 	"image"
 	"log"
 	"net/http"
-	"sentinel-go/internal/engine"
+	"photoshop-like/internal/engine"
 	"unsafe"
 )
 
