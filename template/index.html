@@ -11,4 +11,10 @@
     <button type="submit">Submit</button>
 </form>
 </body>
+<script>
+    fetch('/upload').then(res=>res.json()).then(res=>{
+        console.log(res)
+    })
+
+</script>
 </html>

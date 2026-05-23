@@ -46,8 +46,10 @@ void get_img(unsigned char *pixels, int size) {
         printf("Failed to allocate engine\n");
         return;
     }
-    printf("init GPU %d : ", init_gpu(engine));
-
+    int err = init_gpu(engine);
+    if (err != 0) printf("bad initializing GPU");
+    err = process_pixels(engine, pixels, size);
+    if (err != 0) printf("bad processing pixels");
     free(engine);
     fflush(stdout);
 }

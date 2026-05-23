@@ -7,15 +7,11 @@ package main
 import "C"
 import (
 	"image"
+	"image/jpeg"
 	"log"
 	"net/http"
 	"photoshop-like/internal/engine"
 	"unsafe"
-)
-
-import (
-	_ "image/jpeg"
-	_ "image/png"
 )
 
 type Pixel struct {
@@ -51,7 +47,16 @@ func Upload(w http.ResponseWriter, r *http.Request) int {
 	cData := C.CBytes(pixelBytes)
 	defer C.free(cData)
 	engine.AnalyseImage(cData, len(pixels)*4)
+	result := C.GoBytes(cData, C.int(len(pixels)*4))
+	new_img := image.NewRGBA(bounds)
+	copy(new_img.Pix, result)
+	w.Header().Set("Content-Type", "image/jpg")
+	err = jpeg.Encode(w, new_img, nil)
+	if err != nil {
+		return 0
+	}
 	return http.StatusOK
+
 }
 func rgbaToPixel(r uint32, g uint32, b uint32, a uint32) Pixel {
 	return Pixel{uint8(r / 257), uint8(g / 257), uint8(b / 257), uint8(a / 257)}
