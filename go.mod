@@ -1,4 +1,4 @@
-module sentinel-go
+module photoshop-like
 
 go 1.26.3
 
