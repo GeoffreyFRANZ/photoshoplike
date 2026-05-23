@@ -6,15 +6,26 @@
 </head>
 <body>
 <h1>Upload Image</h1>
-<form action="/upload" method="post" enctype="multipart/form-data">
+<form id="form" method="post">
     <input type="file" name="img" id="img">
     <button type="submit">Submit</button>
 </form>
+
 </body>
 <script>
-    fetch('/upload').then(res=>res.json()).then(res=>{
-        console.log(res)
+    const form = document.getElementById('form')
+    form.addEventListener("submit", (e) => {
+        e.preventDefault()
+        const formData = new FormData(form)
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        }).then(res => res.blob()).then(res => {
+            let img = document.createElement('img')
+            img.src = URL.createObjectURL(res)
+            document.body.appendChild(img)
+            img.style.width = '50%'
+        })
     })
-
 </script>
 </html>
