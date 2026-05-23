@@ -20,3 +20,5 @@ int process_pixels(opencl_engine *engine, unsigned char *pixels, int size) {
     if (err != CL_SUCCESS) return -1;
     return 0;
 }
+int reverse_pixels() {
+}
