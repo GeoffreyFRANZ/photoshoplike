@@ -43,6 +43,7 @@ func Upload(w http.ResponseWriter, r *http.Request) int {
 			i++
 		}
 	}
+
 	pixelBytes := unsafe.Slice((*byte)(unsafe.Pointer(&pixels[0])), len(pixels)*4)
 	cData := C.CBytes(pixelBytes)
 	defer C.free(cData)
@@ -50,6 +51,7 @@ func Upload(w http.ResponseWriter, r *http.Request) int {
 	result := C.GoBytes(cData, C.int(len(pixels)*4))
 	new_img := image.NewRGBA(bounds)
 	copy(new_img.Pix, result)
+	createSession(r, w, result, len(pixels)*4, height, width)
 	w.Header().Set("Content-Type", "image/jpg")
 	err = jpeg.Encode(w, new_img, nil)
 	if err != nil {

@@ -25,6 +25,18 @@
             img.src = URL.createObjectURL(res)
             document.body.appendChild(img)
             img.style.width = '50%'
+            const btn = document.createElement('button')
+            btn.type = 'button'
+            btn.textContent = 'reverse color'
+            btn.addEventListener('click', () => {
+                fetch('/reverse',{
+                    method: 'POST',
+                    body: formData
+                }).then(res => res.blob()).then(res => {
+                    img.src = URL.createObjectURL(res)
+                })
+            })
+            document.body.appendChild(btn)
         })
     })
 </script>
