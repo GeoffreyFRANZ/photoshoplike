@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func reverse_pixels(w http.ResponseWriter, r *http.Request) {
+func reversing_pixels(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, "SessionsID")
 	if err != nil {
 		return
@@ -20,4 +20,3 @@ func reverse_pixels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/jpg")
 	w.Write(data.(PixelsData).Pixels)
 }
-
