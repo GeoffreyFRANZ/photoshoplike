@@ -9,4 +9,5 @@ add_executable(sentinel_go
         internal/engine/engine.c
         internal/engine/engine.h
         internal/engine/opencl_engine.c
-        internal/engine/opencl_engine.h)
+        internal/engine/opencl_engine.h
+        internal/engine/kernel.c)
