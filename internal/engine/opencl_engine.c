@@ -26,7 +26,9 @@ int process_pixels(opencl_engine *engine, unsigned char *pixels, int size) {
 
 int send_pixels_gpu(opencl_engine *engine, unsigned char *pixels, int size) {
     int err;
-    FILE *file = fopen("kernel.cl", "r");
+    engine->mem = clCreateBuffer(engine->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR , size, pixels, &err);
+    if (err != CL_SUCCESS) return -1;
+    FILE *file = fopen("internal/engine/kernel.cl", "r");
     size_t global_size = size;
     if (file == NULL) return -1;
     fseek(file, 0, SEEK_END);
@@ -34,11 +36,21 @@ int send_pixels_gpu(opencl_engine *engine, unsigned char *pixels, int size) {
     fseek(file, 0, SEEK_SET);
     char *buffer = malloc(file_size);
     fread(buffer, 1, file_size, file);
-    cl_program program = clCreateProgramWithSource(engine->context, 1, (const char **)&buffer, 0, &err);
-    if (err != CL_SUCCESS) return -1;
-    cl_int building = clBuildProgram(program, 1, &engine->device_id, 0, 0, 0);
+    size_t kernel_size = file_size;
+  cl_program program = clCreateProgramWithSource(engine->context, 1, (const char **)&buffer, &kernel_size, &err);
+    if (err != CL_SUCCESS) {
+        fclose(file);
+        free(buffer);
+        return -1;
+    }
+  err = clBuildProgram(program, 1, &engine->device_id, 0, 0, 0);
+  if (err != CL_SUCCESS) { fclose(file); free(buffer); return -1; }
     cl_kernel kernel = clCreateKernel(program, "revert_pixels", &err);
-    if (err != CL_SUCCESS) return -1;
+    if (err != CL_SUCCESS) {
+        fclose(file);
+        free(buffer);
+        return -1;
+    }
     clSetKernelArg(kernel, 0, sizeof(engine->mem), &engine->mem);
     clSetKernelArg(kernel, 1, sizeof(int), &size);
     clEnqueueNDRangeKernel(engine->queue, kernel, 1, 0, &global_size, 0, 0, 0, 0);

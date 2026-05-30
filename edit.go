@@ -1,11 +1,16 @@
 package main
 
 import (
-	"fmt"
+	"image"
+	"image/jpeg"
+	"io"
 	"net/http"
+	"photoshop-like/internal/engine"
+	"unsafe"
 )
 
 func reversing_pixels(w http.ResponseWriter, r *http.Request) {
+	io.Copy(io.Discard, r.Body)
 	session, err := store.Get(r, "SessionsID")
 	if err != nil {
 		return
@@ -14,9 +19,15 @@ func reversing_pixels(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	pixels, _ := m.Load(session.ID)
-	fmt.Println(pixels)
-
+	pixels := data.(PixelsData).Pixels
+	size := data.(PixelsData).Size
+	width := data.(PixelsData).Width
+	height := data.(PixelsData).Height
+	upLeft := image.Point{0, 0}
+	lowRight := image.Point{width, height}
+	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
+	engine.RevertingColor(unsafe.Pointer(&pixels[0]), size)
+	copy(img.Pix, pixels)
 	w.Header().Set("Content-Type", "image/jpg")
-	w.Write(data.(PixelsData).Pixels)
+	err = jpeg.Encode(w, img, nil)
 }

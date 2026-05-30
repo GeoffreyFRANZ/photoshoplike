@@ -16,7 +16,17 @@ int min(int min, int value) {
     }
     return min;
 }
+opencl_engine *create_engine() {
+     opencl_engine *engine = malloc(sizeof(opencl_engine));
+    if (engine == NULL) {
+        printf("Failed to allocate engine\n");
+        exit(-1);
+    }
+    int err = init_gpu(engine);
+    if (err != 0) exit(-1);
+    return engine;
 
+}
 void get_img(unsigned char *pixels, int size) {
     int i = 0;
     int minR = 255;
@@ -41,16 +51,16 @@ void get_img(unsigned char *pixels, int size) {
         }
         i++;
     }
-    opencl_engine *engine = malloc(sizeof(opencl_engine));
-    if (engine == NULL) {
-        printf("Failed to allocate engine\n");
-        return;
-    }
-    int err = init_gpu(engine);
-    if (err != 0) printf("bad initializing GPU");
-    err = process_pixels(engine, pixels, size);
-    if (err != 0) printf("bad processing pixels");
-    free(engine);
-    fflush(stdout);
+   opencl_engine *engine = create_engine();
+   int err = process_pixels(engine, pixels, size);
+   if (err != 0) printf("bad processing pixels");
+   free(engine);
+   fflush(stdout);
 }
-    
+void revert_color(unsigned char *pixels, int size) {
+    opencl_engine *engine = create_engine();
+    int err = send_pixels_gpu(engine, pixels, size);
+    if (err != 0) printf("bad sending pixels");
+    free(engine);
+
+}

@@ -31,7 +31,6 @@
             btn.addEventListener('click', () => {
                 fetch('/reverse',{
                     method: 'POST',
-                    body: formData
                 }).then(res => res.blob()).then(res => {
                     img.src = URL.createObjectURL(res)
                 })
