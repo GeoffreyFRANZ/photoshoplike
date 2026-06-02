@@ -5,11 +5,10 @@ import (
 	"image/jpeg"
 	"io"
 	"net/http"
-	"photoshop-like/internal/engine"
 	"unsafe"
 )
 
-func reversing_pixels(w http.ResponseWriter, r *http.Request) {
+func (s *Server) reverseColorHandler(w http.ResponseWriter, r *http.Request) {
 	io.Copy(io.Discard, r.Body)
 	session, err := store.Get(r, "SessionsID")
 	if err != nil {
@@ -26,7 +25,7 @@ func reversing_pixels(w http.ResponseWriter, r *http.Request) {
 	upLeft := image.Point{0, 0}
 	lowRight := image.Point{width, height}
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
-	engine.RevertingColor(unsafe.Pointer(&pixels[0]), size)
+	s.engine.RevertColor(unsafe.Pointer(&pixels[0]), size)
 	copy(img.Pix, pixels)
 	w.Header().Set("Content-Type", "image/jpg")
 	err = jpeg.Encode(w, img, nil)

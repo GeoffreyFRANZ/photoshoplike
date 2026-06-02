@@ -1,16 +1,14 @@
 package main
 
 /*
-#cgo LDFLAGS: -lOpenCL
 #include <stdlib.h>
 */
 import "C"
 import (
 	"image"
 	"image/jpeg"
-	"log"
+	"io"
 	"net/http"
-	"photoshop-like/internal/engine"
 	"unsafe"
 )
 
@@ -18,20 +16,32 @@ type Pixel struct {
 	R, G, B, A uint8
 }
 
-func Upload(w http.ResponseWriter, r *http.Request) int {
-	file, fileheader, err := r.FormFile("img")
+func Upload(w http.ResponseWriter, r *http.Request) {
+	file, _, err := r.FormFile("img")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return http.StatusBadRequest
+		return
 	}
-	log.Println(file)
-	log.Println(fileheader.Filename)
-	log.Println(fileheader.Header)
-	log.Println("size : ", fileheader.Size)
+	bounds, pixels, width, height, err := decodeToPixel(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	createSession(r, w, pixels, len(pixels), height, width)
+	new_image := image.NewRGBA(bounds)
+	copy(new_image.Pix, pixels)
+	w.Header().Set("Content-Type", "image/jpg")
+	err = jpeg.Encode(w, new_image, nil)
+}
+
+func rgbaToPixel(r uint32, g uint32, b uint32, a uint32) Pixel {
+	return Pixel{uint8(r / 257), uint8(g / 257), uint8(b / 257), uint8(a / 257)}
+}
+
+func decodeToPixel(file io.Reader) (image.Rectangle, []byte, int, int, error) {
 	img, _, err := image.Decode(file)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return http.StatusBadRequest
+		return image.Rectangle{}, nil, 0, 0, err
 	}
 	bounds := img.Bounds()
 	width, height := bounds.Dx(), bounds.Dy()
@@ -43,23 +53,7 @@ func Upload(w http.ResponseWriter, r *http.Request) int {
 			i++
 		}
 	}
-
 	pixelBytes := unsafe.Slice((*byte)(unsafe.Pointer(&pixels[0])), len(pixels)*4)
-	cData := C.CBytes(pixelBytes)
-	defer C.free(cData)
-	engine.AnalyseImage(cData, len(pixels)*4)
-	result := C.GoBytes(cData, C.int(len(pixels)*4))
-	new_img := image.NewRGBA(bounds)
-	copy(new_img.Pix, result)
-	createSession(r, w, result, len(pixels)*4, height, width)
-	w.Header().Set("Content-Type", "image/jpg")
-	err = jpeg.Encode(w, new_img, nil)
-	if err != nil {
-		return 0
-	}
-	return http.StatusOK
 
-}
-func rgbaToPixel(r uint32, g uint32, b uint32, a uint32) Pixel {
-	return Pixel{uint8(r / 257), uint8(g / 257), uint8(b / 257), uint8(a / 257)}
+	return bounds, pixelBytes, width, height, err
 }

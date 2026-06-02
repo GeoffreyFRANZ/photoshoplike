@@ -3,20 +3,7 @@
 #include <stdlib.h>
 #include "opencl_engine.h"
 
-int max(int max, int value) {
-    if (max < value) {
-        return value;
-    }
-    return max;
-}
-
-int min(int min, int value) {
-    if (min > value) {
-        return value;
-    }
-    return min;
-}
-opencl_engine *create_engine() {
+opencl_engine *create_engine(void) {
      opencl_engine *engine = malloc(sizeof(opencl_engine));
     if (engine == NULL) {
         printf("Failed to allocate engine\n");
@@ -27,40 +14,7 @@ opencl_engine *create_engine() {
     return engine;
 
 }
-void get_img(unsigned char *pixels, int size) {
-    int i = 0;
-    int minR = 255;
-    int minG = 255;
-    int minB = 255;
-    int maxR = 0;
-    int maxG = 0;
-    int maxB = 0;
-
-    while (i < size) {
-        if (i % 4 == 0) {
-            minR = min(minR, pixels[i]);
-            maxR = max(maxR, pixels[i]);
-        }
-        if (i % 4 == 1) {
-            minG = min(minG, pixels[i]);
-            maxG = max(maxG, pixels[i]);
-        }
-        if (i % 4 == 2) {
-            minB = min(minB, pixels[i]);
-            maxB = max(maxB, pixels[i]);
-        }
-        i++;
-    }
-   opencl_engine *engine = create_engine();
-   int err = process_pixels(engine, pixels, size);
-   if (err != 0) printf("bad processing pixels");
-   free(engine);
-   fflush(stdout);
-}
-void revert_color(unsigned char *pixels, int size) {
-    opencl_engine *engine = create_engine();
+ void revert_color(opencl_engine *engine, unsigned char *pixels, int size) {
     int err = send_pixels_gpu(engine, pixels, size);
     if (err != 0) printf("bad sending pixels");
-    free(engine);
-
 }

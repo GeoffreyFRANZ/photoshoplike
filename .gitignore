@@ -1,4 +1,23 @@
-/tmp/*
-/tmp/
+# Secrets / env
 .env
-photoshop-like
+
+# Compiled binaries (Go output has no extension — listed explicitly)
+/main
+/upload
+/photoshop-like
+/sentinel-go
+*.exe
+*.out
+*.o
+*.a
+
+# Build / tmp
+/tmp/
+*.log
+
+# CLion / CMake
+/cmake-build-*/
+.idea/
+
+# Live-reload (air)
+.air.toml
