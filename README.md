@@ -16,17 +16,23 @@ Most image processing libraries abstract everything away. I wanted to understand
 - How to move data between Go and C without copying (zero-copy via `unsafe.Pointer`)
 - How GPU parallelism works at the OpenCL kernel level
 - What the host/device memory model looks like in practice
+- How to **industrialize** GPU inference behind a web service: create the GPU engine once, keep it resident, and reuse it across every request (dependency injection) instead of rebuilding it per call
 
 ## Architecture
 
 ```
-Browser upload
-    │
-    ▼
-Go HTTP server (net/http)
+                          ┌─────────────────────────────┐
+  boot once ──▶ engine.New() → create OpenCL engine (GPU-resident,
+                          │     injected into the HTTP server)
+                          └──────────────┬──────────────┘
+                                         │ reused every request
+Browser upload                          │
+    │                                    │
+    ▼                                    ▼
+Go HTTP server (net/http) ── Server{engine} (dependency injection)
     │  raw bytes
     ▼
-CGo bridge ── unsafe.Pointer (zero-copy) ──▶ C engine
+CGo bridge ── unsafe.Pointer (zero-copy) ──▶ C engine (shared)
                                                   │
                                                   ▼
                                           OpenCL 3.0 kernel
@@ -36,7 +42,7 @@ CGo bridge ── unsafe.Pointer (zero-copy) ──▶ C engine
                                           processed RGBA buffer
     ◀─────────────────────────────────────────────┘
     ▼
-PNG response → Browser
+JPEG response → Browser
 ```
 
 ## Tech stack
@@ -47,6 +53,7 @@ PNG response → Browser
 | Memory bridge | CGo + `unsafe.Pointer` | Zero-copy transfer — no malloc/free overhead at the boundary |
 | Pixel engine | C (C11) | Manual memory management, direct hardware access |
 | GPU compute | OpenCL 3.0 | Parallel pixel processing — each pixel is independent |
+| Engine lifecycle | Dependency injection | GPU engine built once at boot, injected into the server, reused per request (GPU-resident) |
 
 ## Key concepts implemented
 
@@ -74,15 +81,45 @@ void process_image(unsigned char *pixels, int width, int height) {
 - Context, command queue, and program compilation
 - Kernel execution on device memory
 
+### GPU-resident engine (dependency injection)
+The GPU engine is expensive to build (device enumeration, context, queue). Instead of
+rebuilding it on every request, it is created **once** at boot and **injected** into the
+HTTP server, then reused for the lifetime of the process.
+
+```go
+// boot — build the GPU engine once
+type Server struct {
+    engine *engine.Engine // injected dependency, GPU-resident
+}
+
+func main() {
+    server := Server{engine.New()} // create_engine() runs a single time
+    mux.HandleFunc("/reverse-color", server.reverseColorHandler)
+    // ...
+}
+
+// per request — reuse the shared engine, no GPU re-setup
+func (s *Server) reverseColorHandler(w http.ResponseWriter, r *http.Request) {
+    s.engine.RevertColor(unsafe.Pointer(&pixels[0]), size)
+}
+```
+
+The C side mirrors this: `create_engine()` allocates the OpenCL context, and the filter
+functions receive that engine as a parameter instead of allocating/freeing one per call.
+
 ## Current state
 
 - [x] Go HTTP server — image upload + response
-- [x] Image decoding (JPEG, PNG) → flat RGBA byte array
+- [x] Image decoding (JPEG) → flat RGBA byte array
 - [x] CGo bridge — Go → C zero-copy via `unsafe.Pointer`
 - [x] OpenCL init — platform, device, context, queue
-- [ ] GPU buffer allocation + kernel execution
-- [ ] Processed pixels → browser response
-- [ ] Filter library (grayscale, blur, edge detection)
+- [x] GPU buffer allocation + kernel execution (invert filter)
+- [x] Processed pixels → browser response (JPEG)
+- [x] GPU-resident engine via dependency injection
+- [ ] Thread-safe shared engine (mutex over the GPU)
+- [ ] Upload hardening (size cap, decompression-bomb guard)
+- [ ] Filter library (grayscale, brightness, blur, edge detection)
+- [ ] AI-based light/contrast correction (OpenVINO, CPU/GPU/NPU) — v2
 
 ## Run locally
 
@@ -101,6 +138,8 @@ go run .
 - **OpenCL memory model** — host vs device buffers, `clEnqueueWriteBuffer`, `clEnqueueNDRangeKernel`
 - **GPU parallelism** — why image filters are embarrassingly parallel (each pixel independent)
 - **C memory discipline** — `malloc`/`free` lifecycle, avoiding leaks across the CGo boundary
+- **Dependency injection** — keeping a costly GPU engine resident and reusing it, instead of rebuilding it per request
+- **Concurrency** — protecting a shared GPU engine against concurrent HTTP requests (goroutines + mutex)
 - **Systems programming mindset** — thinking in bytes, pointers, and cache lines
 
 ## Related
