@@ -1,4 +1,4 @@
-package main
+package api
 
 /*
 #include <stdlib.h>
@@ -9,6 +9,7 @@ import (
 	"image/jpeg"
 	"io"
 	"net/http"
+	"photoshop-like/internal/session"
 	"unsafe"
 )
 
@@ -16,19 +17,25 @@ type Pixel struct {
 	R, G, B, A uint8
 }
 
-func Upload(w http.ResponseWriter, r *http.Request) {
+func (s *Server) Upload(w http.ResponseWriter, r *http.Request) {
 	file, _, err := r.FormFile("img")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	bounds, pixels, width, height, err := decodeToPixel(file)
+
+	_, err = s.session.Create(r, w, session.PixelsData{
+		Pixels: pixels,
+		Size:   len(pixels),
+		Width:  width,
+		Height: height,
+	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	createSession(r, w, pixels, len(pixels), height, width)
 	new_image := image.NewRGBA(bounds)
+
 	copy(new_image.Pix, pixels)
 	w.Header().Set("Content-Type", "image/jpg")
 	err = jpeg.Encode(w, new_image, nil)

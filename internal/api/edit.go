@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"image"
@@ -8,20 +8,20 @@ import (
 	"unsafe"
 )
 
-func (s *Server) reverseColorHandler(w http.ResponseWriter, r *http.Request) {
-	io.Copy(io.Discard, r.Body)
-	session, err := store.Get(r, "SessionsID")
+func (s *Server) ReverseColorHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := io.Copy(io.Discard, r.Body)
 	if err != nil {
 		return
 	}
-	data, ok := m.Load(session.ID)
-	if !ok {
+	sess, b := s.session.Load(r)
+	if b == false {
 		return
 	}
-	pixels := data.(PixelsData).Pixels
-	size := data.(PixelsData).Size
-	width := data.(PixelsData).Width
-	height := data.(PixelsData).Height
+
+	pixels := sess.Pixels
+	size := sess.Size
+	width := sess.Width
+	height := sess.Height
 	upLeft := image.Point{0, 0}
 	lowRight := image.Point{width, height}
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
