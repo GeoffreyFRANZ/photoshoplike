@@ -10,11 +10,13 @@ opencl_engine *create_engine(void) {
         exit(-1);
     }
     int err = init_gpu(engine);
-    if (err != 0) exit(-1);
+    if (err != 0) return NULL;
     return engine;
-
 }
- void revert_color(opencl_engine *engine, unsigned char *pixels, int size) {
+ int revert_color(opencl_engine *engine, unsigned char *pixels, int size) {
     int err = send_pixels_gpu(engine, pixels, size);
-    if (err != 0) printf("bad sending pixels");
+    if (err != 0) {
+        return 1;
+    }
+    return 0;
 }
