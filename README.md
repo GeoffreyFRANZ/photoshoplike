@@ -17,6 +17,7 @@ Most image processing libraries abstract everything away. I wanted to understand
 - How GPU parallelism works at the OpenCL kernel level
 - What the host/device memory model looks like in practice
 - How to **industrialize** GPU inference behind a web service: create the GPU engine once, keep it resident, and reuse it across every request (dependency injection) instead of rebuilding it per call
+- How to **industrialize on-device AI inference**: load an ONNX model, compile it for the device (OpenVINO, `AUTO`), and run it per request — manual tensor pre/post-processing, no Python runtime
 
 ## Architecture
 
@@ -54,6 +55,7 @@ JPEG response → Browser
 | Pixel engine | C (C11) | Manual memory management, direct hardware access |
 | GPU compute | OpenCL 3.0 | Parallel pixel processing — each pixel is independent |
 | Engine lifecycle | Dependency injection | GPU engine built once at boot, injected into the server, reused per request (GPU-resident) |
+| AI inference | OpenVINO 2026.2 + ONNX | On-device model (Zero-DCE) for light correction — compiled for CPU/GPU/NPU via `AUTO`, manual tensor I/O |
 
 ## Key concepts implemented
 
@@ -119,7 +121,7 @@ functions receive that engine as a parameter instead of allocating/freeing one p
 - [ ] Thread-safe shared engine (mutex over the GPU)
 - [ ] Upload hardening (size cap, decompression-bomb guard)
 - [ ] Filter library (grayscale, brightness, blur, edge detection)
-- [ ] AI-based light/contrast correction (OpenVINO, CPU/GPU/NPU) — v2
+- [x] AI light correction (OpenVINO + Zero-DCE ONNX) — manual tensor pre/post-processing, device `AUTO`
 
 ## Run locally
 
@@ -141,6 +143,7 @@ go run .
 - **Dependency injection** — keeping a costly GPU engine resident and reusing it, instead of rebuilding it per request
 - **Concurrency** — protecting a shared GPU engine against concurrent HTTP requests (goroutines + mutex)
 - **Systems programming mindset** — thinking in bytes, pointers, and cache lines
+- **On-device AI inference** — OpenVINO C API, ONNX models, tensor layout (planar NCHW), pre/post-processing by hand
 
 ## Related
 

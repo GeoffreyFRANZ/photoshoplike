@@ -10,6 +10,7 @@
 - JPEG response to browser, image displays without page reload
 - Invert filter — OpenCL kernel (`255 - R, 255 - G, 255 - B`) via `/reverse-color`
 - GPU-resident engine refactor — dependency injection (engine built once, reused per request)
+- AI light correction — OpenVINO inference (Zero-DCE ONNX, device `AUTO`) via `/contrast`, manual tensor pre/post-processing
 
 ## 🔧 In Progress
 - Thread-safety — protect the shared GPU engine against concurrent requests (`sync.Mutex`)
@@ -22,6 +23,6 @@
 
 ## 🚀 Later
 - More filters (grayscale, brightness, blur, edge detection)
-- AI light/contrast correction — OpenVINO inference (CPU/GPU/NPU) via `extern "C"` (v2)
+- Effect dosage (blend slider) on the AI correction
 - Clean UI
 - Docker
