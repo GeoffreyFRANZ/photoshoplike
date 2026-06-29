@@ -14,5 +14,5 @@ typedef struct opencl_engine {
 
 int init_gpu(opencl_engine *engine);
 int send_pixels_gpu(opencl_engine *engine, unsigned char *pixels, int size);
-#endif //SENTINEL_GO_OPENCL_ENGINE_H
+#endif
 

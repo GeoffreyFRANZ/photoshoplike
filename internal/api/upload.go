@@ -24,6 +24,10 @@ func (s *Server) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	bounds, pixels, width, height, err := decodeToPixel(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	_, err = s.session.Create(r, w, session.PixelsData{
 		Pixels: pixels,

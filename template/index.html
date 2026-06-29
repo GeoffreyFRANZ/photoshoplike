@@ -25,17 +25,29 @@
             img.src = URL.createObjectURL(res)
             document.body.appendChild(img)
             img.style.width = '50%'
-            const btn = document.createElement('button')
-            btn.type = 'button'
-            btn.textContent = 'reverse color'
-            btn.addEventListener('click', () => {
+            const reverseBtn = document.createElement('button')
+            reverseBtn.type = 'button'
+            reverseBtn.textContent = 'reverse color'
+            reverseBtn.addEventListener('click', () => {
                 fetch('/reverse-color',{
                     method: 'POST',
                 }).then(res => res.blob()).then(res => {
                     img.src = URL.createObjectURL(res)
                 })
             })
-            document.body.appendChild(btn)
+
+            const contrastBtn = document.createElement('button')
+            contrastBtn.type = 'button'
+            contrastBtn.textContent = 'correction de luminosité'
+            contrastBtn.addEventListener('click', () => {
+                fetch('/contrast',{
+                    method: 'POST',
+                }).then(res => res.blob()).then(res => {
+                    img.src = URL.createObjectURL(res)
+                })
+            })
+            document.body.appendChild(reverseBtn)
+            document.body.appendChild(contrastBtn)
         })
     })
 </script>

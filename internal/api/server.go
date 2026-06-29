@@ -6,10 +6,11 @@ import (
 )
 
 type Server struct {
-	engine  *engine.Engine
-	session *session.Store
+	engine   *engine.Engine
+	session  *session.Store
+	openvino *engine.OpenVino
 }
 
-func New(eng *engine.Engine, store *session.Store) *Server {
-	return &Server{eng, store}
+func New(eng *engine.Engine, openvino *engine.OpenVino, store *session.Store) *Server {
+	return &Server{eng, store, openvino}
 }

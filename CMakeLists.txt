@@ -11,6 +11,8 @@ add_library(engine STATIC
         internal/engine/engine.c
         internal/engine/engine.h
         internal/engine/opencl_engine.c
-        internal/engine/opencl_engine.h)
+        internal/engine/opencl_engine.h
+        internal/engine/openvino_engine.c
+        internal/engine/openvino_engine.h)
 
-target_link_libraries(engine PRIVATE OpenCL::OpenCL)
+target_link_libraries(engine PRIVATE OpenCL::OpenCL openvino_c)
